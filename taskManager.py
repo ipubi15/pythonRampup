@@ -1,4 +1,5 @@
 from tasks import *
+from db import closeDB
 
 def mainMenu():
     print("\n\n==Task Manager==")
@@ -18,6 +19,7 @@ def main():
         elif Commands.lists.name.find(command, 0) == 0:
             listTasks()
         elif Commands.exits.name.find(command, 0) == 0:
+            closeDB()
             print("Closing program...")
             break;
         elif Commands.delete.name.find(command, 0) == 0:
@@ -31,3 +33,4 @@ def main():
 if __name__ == "__main__":
     loadFile()
     main()
+
