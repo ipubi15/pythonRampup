@@ -17,25 +17,33 @@ class TaskStatus(Enum):
     InProgress = 1
     Done = 2
 
+class updateOption(Enum):
+    Name = 0
+    Description = 1
+    Status = 2
+
 class Task:
     __index : int
     __name : str
     __description : str
     __status : TaskStatus
 
-    def __init__(self, name, description, status=TaskStatus.ToDo, index=None):
+    def __init__(self, name, description, status=TaskStatus.ToDo, index=-1):
         self.__name = name
         self.__description = description
         self.__status = status
-        task = (name, description, status.value)
-        if index == None:
-            newTaskIndex = addTaskDB(task)
-            if newTaskIndex != -1:
-                self.__index = newTaskIndex
-            else:
-                raise Exception("Error adding to DB")
+        self.__index = index
+
+    def addToDB(self) -> bool:
+        task = (self.__name, self.__description, self.__status.value)
+        newTaskIndex = addTaskDB(task)
+        if newTaskIndex != -1:
+            self.__index = newTaskIndex
+            return True
         else:
-            self.__index = index
+            print("Error adding to DB")
+            return False
+
 
     def getIndex(self) -> int:
         return self.__index
@@ -76,22 +84,26 @@ def loadFile():
         task = Task(name=row[1], description=row[2], status=TaskStatus(row[3]), index=row[0])
         taskList[row[0]] = task
 
-def addTask():
-    """Adds task to list
-    """
+def addTask(newTask : str, newTaskDesc : str) -> bool:
     global taskList
-    newTask = input("Insert task name: ")
-    newTaskDesc = input("Insert task description: ")
     try:
         if validateTaskInput(newTask):
             task = Task(name=newTask, description=newTaskDesc)
-            taskList[task.getIndex()] = task
-        else:
-            return
+            if task.addToDB():
+                taskList[task.getIndex()] = task
     except:
         print("Failed to add: " + newTask)
+        return False
     else:
         print("Successfully added: " + newTask)
+        return True
+
+def addTaskInput():
+    """Adds task to list
+    """
+    newTask = input("Insert task name: ")
+    newTaskDesc = input("Insert task description: ")
+    addTask(newTask, newTaskDesc)
 
 def listTasks():
     """Lists added tasks
@@ -106,43 +118,60 @@ def listTasks():
     print("---------------\n")
     input("Type to continue...")
 
-def updateTask():
+def updateTask(option : int, taskId : int, value) -> bool:
     """Updates existing task
     """
-    updateTaskID = int(input("Task ID to be updated: ").strip())
-    option = int(input("Update Name(0), Description(1) or Status(2)? "))
-    if option < 0 or option > 2:
+    if option < updateOption.Name.value or option > updateOption.Status.value:
         print("Invalid Option.")
-        return
+        return False
 
     try:
-        if option == 0:
-            newTask = input("Insert new task name: ")
-            if validateTaskInput(newTask):
-                taskList[updateTaskID].setName(newTask)
-        elif option == 1:
-            description = input("Insert new task description: ")
-            taskList[updateTaskID].setDescription(description)
+        if option == updateOption.Name.value:
+            if validateTaskInput(value):
+                taskList[taskId].setName(value)
+        elif option == updateOption.Description.value:
+            taskList[taskId].setDescription(value)
         else:
-            status = int(input("Insert Task Status(ToDo=0, InProgress=1, Done=2): "))
-            if status < 0 or status > 2:
+            if value < TaskStatus.ToDo.value or value > TaskStatus.Done.value:
                 print("Invalid Status")
             else:
-                taskList[updateTaskID].setStatus(TaskStatus(status))
+                taskList[taskId].setStatus(TaskStatus(value))
     except:
         print("Task ID not found")
+        return False
     else:
-        print(f"Successfully updated: {updateTaskID:d}")
+        print(f"Successfully updated: {taskId:d}")
+        return True
 
-def deleteTask():
+def updateTaskInput():
+    taskId = int(input("Task ID to be updated: ").strip())
+    option = int(input("Update Name(0), Description(1) or Status(2)? "))
+    if option == updateOption.Name.value:
+        inputStr = "Insert new task name: "
+    elif option == updateOption.Description.value:
+        inputStr = "Insert new task description: "
+    elif option == updateOption.Status.value:
+        inputStr = "Insert Task Status(ToDo=0, InProgress=1, Done=2): "
+    else:
+        print("Invalid option")
+        return
+    value = input(inputStr)
+    updateTask(option, taskId, value)
+
+def deleteTask(indexId : int) -> bool:
     """Removes previously added task
     """
-    deleteTask = input("Task ID to be deleted: ").strip()
-    deleteTask = int(deleteTask)
     try:
-        task = taskList.pop(deleteTask)
+        task = taskList.pop(indexId)
         deleteTaskDB(task.getIndex())
         del task
-        print(f"Successfully deleted ID: {deleteTask:d}")
+        print(f"Successfully deleted ID: {indexId:d}")
     except:
         print("Task ID not found")
+        return False
+    else:
+        return True
+
+def deleteTaskInput():
+    indexId = int(input("Task ID to be deleted: ").strip())
+    deleteTask(indexId)

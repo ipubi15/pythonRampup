@@ -15,7 +15,7 @@ def main():
         if command.__len__() == 0:
             print("Empty command is not valid")
         elif Commands.add.name.find(command, 0) == 0:
-            addTask()
+            addTaskInput()
         elif Commands.lists.name.find(command, 0) == 0:
             listTasks()
         elif Commands.exits.name.find(command, 0) == 0:
@@ -23,9 +23,9 @@ def main():
             print("Closing program...")
             break;
         elif Commands.delete.name.find(command, 0) == 0:
-            deleteTask()
+            deleteTaskInput()
         elif Commands.update.name.find(command, 0) == 0:
-            updateTask()
+            updateTaskInput()
         else:
             print("Unknown parameter. Try again")
 
