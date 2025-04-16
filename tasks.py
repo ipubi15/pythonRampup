@@ -1,8 +1,7 @@
 from utils import *
 from enum import Enum
-from db import *
 import sys
-
+import db
 taskList = {}
 
 class Commands(Enum):
@@ -36,7 +35,7 @@ class Task:
 
     def addToDB(self) -> bool:
         task = (self.__name, self.__description, self.__status.value)
-        newTaskIndex = addTaskDB(task)
+        newTaskIndex = db.addTaskDB(task)
         if newTaskIndex != -1:
             self.__index = newTaskIndex
             return True
@@ -58,15 +57,15 @@ class Task:
         return self.__status
 
     def setName(self, name : str):
-        if updateTaskDB("name", name, self.__index):
+        if db.updateTaskDB("name", name, self.__index):
             self.__name = name
 
     def setDescription(self, description : str):
-        if updateTaskDB("description", description, self.__index):
+        if db.updateTaskDB("description", description, self.__index):
             self.__description = description
 
     def setStatus(self, status : TaskStatus):
-        if updateTaskDB("status", status.value, self.__index):
+        if db.updateTaskDB("status", status.value, self.__index):
             self.__status = status
 
     def printTask(self) -> str:
@@ -76,7 +75,7 @@ def loadFile():
     global taskList 
     rows = []
 
-    if not initDB(rows):
+    if not db.initDB("taskManager.db", rows):
         print("Exiting program DB failed!")
         sys.exit()
 
@@ -91,6 +90,9 @@ def addTask(newTask : str, newTaskDesc : str) -> bool:
             task = Task(name=newTask, description=newTaskDesc)
             if task.addToDB():
                 taskList[task.getIndex()] = task
+            else:
+                del task
+                raise Exception
     except:
         print("Failed to add: " + newTask)
         return False
@@ -132,11 +134,13 @@ def updateTask(option : int, taskId : int, value) -> bool:
         elif option == updateOption.Description.value:
             taskList[taskId].setDescription(value)
         else:
+            value = int(value) 
             if value < TaskStatus.ToDo.value or value > TaskStatus.Done.value:
                 print("Invalid Status")
             else:
                 taskList[taskId].setStatus(TaskStatus(value))
-    except:
+    except Exception as e:
+        print(e)
         print("Task ID not found")
         return False
     else:
@@ -163,7 +167,7 @@ def deleteTask(indexId : int) -> bool:
     """
     try:
         task = taskList.pop(indexId)
-        deleteTaskDB(task.getIndex())
+        db.deleteTaskDB(task.getIndex())
         del task
         print(f"Successfully deleted ID: {indexId:d}")
     except:

@@ -12,15 +12,17 @@ __sqlInsert = '''INSERT INTO tasks(name, description, status)
 
 __sqlLoad = 'select * from tasks'
 
+__sqlSelectID = 'SELECT name, description, status FROM tasks WHERE id = ?'
+
 __sqlUpdateP1 = 'UPDATE tasks SET '
 __sqlUpdateP2 = ' = ? WHERE id = ?'
 
 __sqlDelete = 'DELETE FROM tasks WHERE id = ?'
 
-def initDB(rows) -> bool:
+def initDB(db_file : str, rows) -> bool:
     try:
         global conn
-        with sqlite3.connect("taskManager.db") as conn:
+        with sqlite3.connect(db_file) as conn:
             cursor = conn.cursor()
             cursor.execute(__sqlInit)
             conn.commit()
@@ -66,5 +68,17 @@ def deleteTaskDB(Id) -> bool:
         return True
     except:
         print("Error deleting task from DB")
+        return False
+
+def readTaskDB(Id, row) -> bool:
+    try:
+        cursor = conn.cursor()
+        cursor.execute(__sqlSelectID, (Id,))
+        item = cursor.fetchone()
+        if item != None:
+            row.append(item)
+        return True
+    except:
+        print("Error reading task from DB")
         return False
 
